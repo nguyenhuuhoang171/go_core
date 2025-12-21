@@ -1,4 +1,4 @@
-module go_core
+module github.com/nguyenhuuhoang171/go_core
 
 go 1.23.3
 
