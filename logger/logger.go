@@ -1,6 +1,8 @@
 package logger
 
 import (
+	"fmt"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -33,13 +35,17 @@ func (l *AppLogger) Info(prefix string, message string) {
 }
 
 func (l *AppLogger) Error(prefix string, message string) {
-	l.log.Errorf("%s: %s", prefix, message)
+	l.log.Errorf(getLogContent(prefix, message))
 }
 
 func (l *AppLogger) Debug(prefix string, message string) {
-	l.log.Debugf("%s: %s", prefix, message)
+	l.log.Debugf(getLogContent(prefix, message))
 }
 
 func (l *AppLogger) Warn(prefix string, message string) {
-	l.log.Warnf("%s: %s", prefix, message)
+	l.log.Warnf(getLogContent(prefix, message))
+}
+
+func getLogContent(prefix string, message string) string {
+	return fmt.Sprintf("%s: %s", prefix, message)
 }
