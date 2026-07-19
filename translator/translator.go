@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/nicksnyder/go-i18n/v2/i18n"
@@ -16,7 +17,7 @@ type AppTranslator struct {
 	defaultLanguage string
 }
 
-func NewTranslator() (*AppTranslator, error) {
+func NewTranslator(localeDir string, languages []string) (*AppTranslator, error) {
 	translator := &AppTranslator{
 		defaultLanguage: "en",
 	}
@@ -26,12 +27,11 @@ func NewTranslator() (*AppTranslator, error) {
 	translator.bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
 
 	// Load tất cả file translation
-	if _, err := translator.bundle.LoadMessageFile("locale/en.json"); err != nil {
-		return nil, fmt.Errorf("failed to load en.json: %w", err)
-	}
-
-	if _, err := translator.bundle.LoadMessageFile("locale/vi.json"); err != nil {
-		return nil, fmt.Errorf("failed to load vi.json: %w", err)
+	for _, lang := range languages {
+		file := filepath.Join(localeDir, lang+".json")
+		if _, err := translator.bundle.LoadMessageFile(file); err != nil {
+			return nil, fmt.Errorf("failed to load %s: %w", file, err)
+		}
 	}
 
 	return translator, nil
