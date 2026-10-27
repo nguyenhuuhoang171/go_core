@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/nicksnyder/go-i18n/v2/i18n"
@@ -17,13 +18,25 @@ type AppTranslator struct {
 	defaultLanguage string
 }
 
-func NewTranslator(localeDir string, languages []string) (*AppTranslator, error) {
-	translator := &AppTranslator{
-		defaultLanguage: "en",
+// NewTranslator load file <localeDir>/<lang>.json cho từng ngôn ngữ trong
+// languages. defaultLanguage được dùng khi request không gửi ngôn ngữ, và là
+// ngôn ngữ fallback khi một key chưa có bản dịch — nên bắt buộc phải nằm
+// trong languages.
+func NewTranslator(localeDir string, languages []string, defaultLanguage string) (*AppTranslator, error) {
+	defaultTag, err := language.Parse(defaultLanguage)
+	if err != nil {
+		return nil, fmt.Errorf("invalid default language %q: %w", defaultLanguage, err)
+	}
+	if !slices.Contains(languages, defaultLanguage) {
+		return nil, fmt.Errorf("default language %q is not in languages %v", defaultLanguage, languages)
 	}
 
-	// Tạo bundle với ngôn ngữ fallback là English
-	translator.bundle = i18n.NewBundle(language.English)
+	translator := &AppTranslator{
+		defaultLanguage: defaultLanguage,
+	}
+
+	// Tạo bundle với ngôn ngữ fallback là defaultLanguage
+	translator.bundle = i18n.NewBundle(defaultTag)
 	translator.bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
 
 	// Load tất cả file translation
@@ -44,10 +57,12 @@ func (t *AppTranslator) T(lang, key string) string {
 
 	localizer := i18n.NewLocalizer(t.bundle, lang)
 
+	// Khi lang thiếu key, go-i18n vẫn trả bản dịch của defaultLanguage kèm
+	// MessageNotFoundErr — chỉ trả về key khi không có bản dịch nào.
 	msg, err := localizer.Localize(&i18n.LocalizeConfig{
 		MessageID: key,
 	})
-	if err != nil {
+	if err != nil && msg == "" {
 		return key
 	}
 	return msg
