@@ -19,10 +19,14 @@ func ConvertCodeToHTTPStatus(err error) int {
 		return http.StatusBadRequest
 	case codes.Unauthenticated:
 		return http.StatusUnauthorized
+	case codes.PermissionDenied:
+		return http.StatusForbidden
 	case codes.AlreadyExists:
 		return http.StatusConflict
 	case codes.NotFound:
 		return http.StatusNotFound
+	case codes.ResourceExhausted:
+		return http.StatusTooManyRequests
 	default:
 		return http.StatusInternalServerError
 	}
